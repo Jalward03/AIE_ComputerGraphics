@@ -2,9 +2,10 @@
 #include "GraphicsApp.h"
 #include <glm/ext.hpp>
 #include <glm/glm.hpp>
+#include "Input.h"
 
 
-Planet::Planet(bool hasRing, float speed, glm::vec3 position, float radius, int rows, int columns, glm::vec4 color, glm::mat4 transform)
+Planet::Planet(bool hasRing, bool isMoon, float speed, glm::vec3 position, float radius, int rows, int columns, glm::vec4 color)
 {
 	m_position = position;
 	m_radius = radius;
@@ -13,7 +14,7 @@ Planet::Planet(bool hasRing, float speed, glm::vec3 position, float radius, int 
 	m_color = color;
 	m_hasRing = hasRing;
 	m_speed = speed;
-	m_transform = transform;
+	m_transform = glm::mat4(1);
 }
 
 Planet::~Planet()
@@ -26,16 +27,30 @@ void Planet::Draw()
 
 	if (m_hasRing)
 	{
-		aie::Gizmos::addRing(m_position, m_radius + 0.5, m_radius + 1, 12, m_color);
+		aie::Gizmos::addRing(m_position, m_radius + 0.5, m_radius + 1, 12, m_color, &m_transform);
 	}
+
+
 }
 
 void Planet::Update(float deltaTime)
 {
-	
-	m_transform = glm::lookAt(glm::vec3(glm::sin(m_time*m_speed) * m_position.x, 0, glm::cos(m_time*m_speed) * m_position.z),
-		m_position, glm::vec3(0, 1, 0));
+	glm::vec3 rotPoint;
+	if (!m_isMoon)
+	{
+		rotPoint = m_position;
+	}
+	else
+	{
+		rotPoint = m_parent->GetPosition();
+	}
+		
 
-	
+	m_transform = glm::translate(m_transform, -rotPoint);
+	m_transform = glm::rotate(m_transform, 0.01f * m_speed, glm::vec3(0, 1, 0));
+	m_transform = glm::translate(m_transform, rotPoint);
+
+
+
 }
 
