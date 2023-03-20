@@ -7,6 +7,7 @@
 #include "Planet.h"
 #include "OBJMesh.h"
 #include <list>
+#include "SimpleCamera.h"
 
 
 class GraphicsApp : public aie::Application {
@@ -26,8 +27,15 @@ public:
 protected:
 	bool LaunchShaders();
 	void ImGUIRefresher();
+
+	bool PyramidLoader();
+	void PyramidDraw(glm::mat4 pvm);
+
 	bool QuadLoader();
 	void QuadDraw(glm::mat4 pvm);
+
+	bool BoxLoader();
+	void BoxDraw(glm::mat4 pvm);
 
 	bool BunnyLoader();
 	void BunnyDraw(glm::mat4 pvm);
@@ -44,9 +52,17 @@ protected:
 
 
 	Mesh				m_quadMesh;
+	Mesh				m_boxMesh;
+	Mesh				m_pyramidMesh;
+
 	glm::mat4			m_quadTransform;
+	glm::mat4           m_boxTransform;
+	glm::mat4           m_pyramidTransform;
+
 	aie::OBJMesh        m_bunnyMesh;
 	glm::mat4           m_bunnyTransform;
+
+	SimpleCamera m_camera;
 
 	struct Light {
 		glm::vec3 direction;
@@ -67,5 +83,13 @@ protected:
 	Planet* m_uranus;
 	Planet* m_neptune;
 	Planet* m_moon;
+
+	bool m_bunnyEnabled;
+	bool m_planetsEnabled;
+
+
+	bool m_boxEnabled;
+	bool m_quadEnabled;
+	bool m_pyramidEnabled;
 
 };
