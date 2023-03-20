@@ -13,7 +13,7 @@ public:
 	{
 		glm::vec4 position;
 		glm::vec4 normal;
-		glm::vec2 texCoord;
+		glm::vec2 textCoord;
 	};
 
 	// Will be used to make a simple quad

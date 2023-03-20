@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 #include <iostream>
+#include <math.h>
 #include <imgui.h>
 
 using glm::vec3;
@@ -41,6 +42,9 @@ bool GraphicsApp::startup() {
 	m_planetsEnabled = false;
 	m_boxEnabled = false;
 	m_quadEnabled = false;
+	m_pyramidEnabled = false;
+	m_cylinderEnabled = false;
+	m_quadTexturedEnabled = false;
 
 	Planets();
 	return LaunchShaders();
@@ -115,6 +119,8 @@ void GraphicsApp::update(float deltaTime) {
 	ImGUIRefresher();
 
 	m_boxTransform = glm::rotate(m_boxTransform, 0.05f, glm::vec3(0, 1, 1));
+	m_pyramidTransform = glm::rotate(m_pyramidTransform, 0.05f, glm::vec3(0, 1, 1));
+	//m_cylinderTransform = glm::rotate(m_cylinderTransform, 0.05f, glm::vec3(0, 1, 1));
 }
 
 void GraphicsApp::draw() {
@@ -150,7 +156,9 @@ void GraphicsApp::draw() {
 
 	if (m_boxEnabled) BoxDraw(pv * m_boxTransform);
 	if (m_quadEnabled) QuadDraw(pv * m_quadTransform);
-	if (m_pyramidEnabled) QuadDraw(pv * m_pyramidTransform);
+	if (m_quadTexturedEnabled) QuadTextureDraw(pv * m_quadTransform);
+	if (m_pyramidEnabled) PyramidDraw(pv * m_pyramidTransform);
+	if (m_cylinderEnabled) CylinderDraw(pv * m_cylinderTransform);
 
 	Gizmos::draw(m_projectionMatrix * m_viewMatrix);
 }
@@ -172,6 +180,12 @@ bool GraphicsApp::LaunchShaders()
 		return false;
 
 
+	if (!CylinderLoader())
+		return false;
+
+	if (!QuadTextureLoader())
+		return false;
+
 	return true;
 }
 
@@ -189,8 +203,10 @@ void GraphicsApp::ImGUIRefresher()
 
 	ImGui::Begin("Shapes");
 	ImGui::Checkbox("Quad", &m_quadEnabled);
+	ImGui::Checkbox("Textured Quad", &m_quadTexturedEnabled);
 	ImGui::Checkbox("Box", &m_boxEnabled);
 	ImGui::Checkbox("Pyramid", &m_pyramidEnabled);
+	ImGui::Checkbox("Cylinder", &m_cylinderEnabled);
 	ImGui::End();
 
 
@@ -211,41 +227,32 @@ bool GraphicsApp::PyramidLoader()
 		return false;
 	}
 
-	// Defined as 4 vertices for the 2 triangles
 
-	Mesh::Vertex vertices[8];
+	Mesh::Vertex vertices[5];
 
 	// Bottom face
 	vertices[0].position = { -0.5f, 0,  0.5f, 1 };
 	vertices[1].position = { 0.5f, 0,  0.5f, 1 };
 	vertices[2].position = { -0.5f, 0, -0.5f, 1 };
 	vertices[3].position = { 0.5f, 0, -0.5f, 1 };
-	vertices[4].position = { -0.5f, 1,  0.5f, 1 };
-	vertices[5].position = { 0.5f, 1,  0.5f, 1 };
-	vertices[6].position = { -0.5f, 1, -0.5f, 1 };
-	vertices[7].position = { 0.5f, 1, -0.5f, 1 };
+	// Top point
+	vertices[4].position = { 0, 1, 0, 1 };
 
 
 
-	unsigned int indices[36] =
+	unsigned int indices[18] =
 	{
 		0,2,1, // bottom
 		2,3,1,
-		4,5,6, // top
-		6,5,7,
-		1,5,0, // backleft
-		5,4,0,
-		3,7,1, // Front Left
-		5,1,7,
-		2,7,3, // Front Right
-		6,7,2,
-		2,0,4, // Front Left
-		6,2,4
+		4,2,0, // Faces
+		4,3,2,
+		4,1,3,
+		4,0,1
 
 
 	};
 
-	m_pyramidMesh.Initialise(8, vertices, 36, indices);
+	m_pyramidMesh.Initialise(5, vertices, 18, indices);
 
 	//m_quadMesh.InitialiseQuad();
 	m_pyramidTransform = {
@@ -320,6 +327,69 @@ void GraphicsApp::QuadDraw(glm::mat4 pvm)
 
 	m_quadMesh.Draw();
 }
+
+bool GraphicsApp::CylinderLoader()
+{
+	m_simpleShader.loadShader(aie::eShaderStage::VERTEX,
+		"./shaders/simple.vert");
+	m_simpleShader.loadShader(aie::eShaderStage::FRAGMENT,
+		"./shaders/simple.frag");
+
+
+	if (!m_simpleShader.link())
+	{
+		printf("Simple Shader has an Error: %\n",
+			m_simpleShader.getLastError());
+		return false;
+	}
+
+	// Defined as 4 vertices for the 2 triangles
+
+	Mesh::Vertex vertices[17];
+	vertices[0].position = { 0, 0,  0, 1 }; // Center
+
+	for (int i = 1; i < 17; i++)
+	{
+		vertices[i].position = { glm::sin(i *0.5f), 0, glm::cos(i*0.5f), 1 };
+	}
+
+	unsigned int indices[48];
+	
+	for (int i = 0; i < 48; i += 3)
+	{
+		indices[i] = 0;
+		indices[i + 1] = i / 3;
+		indices[i + 2] = i / 3 + 1;
+	
+		
+	}
+
+	m_cylinderMesh.Initialise(17, vertices, 48, indices);
+
+	//m_quadMesh.InitialiseQuad();
+	// This is a 10 'unit' wide quad
+	m_cylinderTransform = {
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0,
+		0, 0, 0, 1
+	};
+}
+
+void GraphicsApp::CylinderDraw(glm::mat4 pvm)
+{
+	// Bind the shader
+	m_simpleShader.bind();
+
+	// Bind the transform
+
+	m_simpleShader.bindUniform("ProjectionViewModel", pvm);
+
+	// Bind the color
+
+	m_cylinderMesh.Draw();
+}
+
 
 bool GraphicsApp::BoxLoader()
 {
@@ -438,6 +508,63 @@ void GraphicsApp::BunnyDraw(glm::mat4 pvm)
 
 
 	m_bunnyMesh.draw();
+}
+
+bool GraphicsApp::QuadTextureLoader()
+{
+	m_texturedShader.loadShader(aie::eShaderStage::VERTEX,
+		"./shaders/textured.vert");
+	m_texturedShader.loadShader(aie::eShaderStage::FRAGMENT,
+		"./shaders/textured.frag");
+
+
+	if (m_texturedShader.link() == false)
+	{
+		printf("Textured Shader has an Error: %s\n", 
+			m_texturedShader.getLastError());
+		return false;
+	}
+
+	if (m_gridTexture.load("./textures/numbered_grid.tga") == false)
+	{
+		printf("Failed to load the grid texture correctly!\n");
+		return false;
+	}
+
+	// Defined as 4 vertices for the 2 triangles
+
+
+	m_quadMesh.InitialiseQuad();
+
+
+	// This is a 10 'unit' wide quad
+	m_quadTransform = {
+		10, 0, 0, 0,
+		0, 10, 0, 0,
+		0, 0, 10, 0,
+		0, 0, 0, 1
+	};
+	return true;
+}
+
+void GraphicsApp::QuadTextureDraw(glm::mat4 pvm)
+{
+	// Bind the shader
+	m_texturedShader.bind();
+
+	// Bind the transform
+
+	m_texturedShader.bindUniform("ProjectionViewModel", pvm);
+
+	// Bind the texture location
+	m_texturedShader.bindUniform("diffuseTexture", 0);
+
+	// Bind the texture to a specific location
+	m_gridTexture.bind(0);
+
+	// Bind the color
+
+	m_quadMesh.Draw();
 }
 
 void GraphicsApp::PhongDraw(glm::mat4 pvm, glm::mat4 transform)

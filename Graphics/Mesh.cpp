@@ -42,6 +42,19 @@ void Mesh::InitialiseQuad()
 	vertices[3].normal = {0,1,0,0};
 	vertices[4].normal = {0,1,0,0};
 	vertices[5].normal = {0,1,0,0};
+
+	vertices[0].textCoord = {0, 1}; // Bottom Left
+	vertices[1].textCoord = {1, 1}; // Bottom Right
+	vertices[2].textCoord = {0, 0}; // Top Left
+	vertices[3].textCoord = {0, 0}; // Top Left
+	vertices[4].textCoord = {1, 1}; // Bottom Right
+	vertices[5].textCoord = {1, 0}; // Top RIght
+
+
+
+
+
+
 	
 
 	// Fill tge vertex buffer
@@ -55,6 +68,10 @@ void Mesh::InitialiseQuad()
 	// Enable the second elemant as the normal
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 4, GL_FLOAT, GL_TRUE, sizeof(Vertex), (void*)16);
+
+	// Enable the third element as the texture coordinate
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)32);
 
 	// Next we unbind the buffers 
 	glBindVertexArray(0);

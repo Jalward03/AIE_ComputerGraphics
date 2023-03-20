@@ -34,30 +34,41 @@ protected:
 	bool QuadLoader();
 	void QuadDraw(glm::mat4 pvm);
 
+	bool CylinderLoader();
+	void CylinderDraw(glm::mat4 pvm);
+
+
 	bool BoxLoader();
 	void BoxDraw(glm::mat4 pvm);
 
 	bool BunnyLoader();
 	void BunnyDraw(glm::mat4 pvm);
 
+	bool QuadTextureLoader();
+	void QuadTextureDraw(glm::mat4 pvm);
+
 	void PhongDraw(glm::mat4 pvm, glm::mat4 transform);
 	// camera transforms
 	glm::mat4	m_viewMatrix;
 	glm::mat4	m_projectionMatrix;
 
+	aie::Texture m_gridTexture;
 	
 	aie::ShaderProgram	m_simpleShader;
 	aie::ShaderProgram  m_colorShader;
 	aie::ShaderProgram  m_phongShader;
+	aie::ShaderProgram m_texturedShader;
 
 
 	Mesh				m_quadMesh;
 	Mesh				m_boxMesh;
 	Mesh				m_pyramidMesh;
+	Mesh				m_cylinderMesh;
 
 	glm::mat4			m_quadTransform;
 	glm::mat4           m_boxTransform;
 	glm::mat4           m_pyramidTransform;
+	glm::mat4           m_cylinderTransform;
 
 	aie::OBJMesh        m_bunnyMesh;
 	glm::mat4           m_bunnyTransform;
@@ -90,6 +101,8 @@ protected:
 
 	bool m_boxEnabled;
 	bool m_quadEnabled;
+	bool m_quadTexturedEnabled;
 	bool m_pyramidEnabled;
+	bool m_cylinderEnabled;
 
 };
