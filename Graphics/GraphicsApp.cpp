@@ -34,26 +34,38 @@ bool GraphicsApp::startup() {
 		glm::perspective(glm::pi<float>() * 0.25f, 16.0f / 9.0f, 0.1f, 1000.0f);
 
 
-	m_light.color = { 1,1,0 };
 	m_ambientLight = { 0.5,0.5,0.5 };
 
+	Light light;
+	light.color = { 1,1,1 };
+	light.direction = { 1,-1,1 };
+
+
+	m_scene = new Scene(&m_camera, glm::vec2(getWindowWidth(), getWindowHeight()),
+		light, m_ambientLight);
 
 	m_bunnyEnabled = false;
 	m_planetsEnabled = false;
 	m_boxEnabled = false;
 	m_quadEnabled = false;
 	m_pyramidEnabled = false;
+	m_discEnabled = false;
 	m_cylinderEnabled = false;
+	m_coneEnabled = false;
 	m_quadTexturedEnabled = false;
+	m_spearEnabled = false;
+	m_batarangEnabled = false;
 
 	Planets();
 	return LaunchShaders();
+
 	return true;
 }
 
 void GraphicsApp::shutdown() {
 
 	Gizmos::destroy();
+	delete m_scene;
 }
 
 void GraphicsApp::Planets()
@@ -120,7 +132,10 @@ void GraphicsApp::update(float deltaTime) {
 
 	m_boxTransform = glm::rotate(m_boxTransform, 0.05f, glm::vec3(0, 1, 1));
 	m_pyramidTransform = glm::rotate(m_pyramidTransform, 0.05f, glm::vec3(0, 1, 1));
-	//m_cylinderTransform = glm::rotate(m_cylinderTransform, 0.05f, glm::vec3(0, 1, 1));
+	m_discTransform = glm::rotate(m_discTransform, 0.05f, glm::vec3(0, 1, 1));
+	m_coneTransform = glm::rotate(m_coneTransform, 0.05f, glm::vec3(0, 1, 1));
+
+
 }
 
 void GraphicsApp::draw() {
@@ -138,7 +153,7 @@ void GraphicsApp::draw() {
 		getWindowHeight());
 	auto pv = m_projectionMatrix * m_viewMatrix;
 
-
+	m_scene->Draw();
 
 
 	if (m_planetsEnabled)
@@ -148,23 +163,36 @@ void GraphicsApp::draw() {
 			planet->Draw();
 		}
 	}
-	if (m_bunnyEnabled)
-	{
-		BunnyDraw(pv * m_bunnyTransform);
-		PhongDraw(pv * m_bunnyTransform, m_bunnyTransform);
-	}
+	if (m_bunnyEnabled)ObjDraw(pv, m_bunnyTransform, &m_bunnyMesh);
 
 	if (m_boxEnabled) BoxDraw(pv * m_boxTransform);
 	if (m_quadEnabled) QuadDraw(pv * m_quadTransform);
 	if (m_quadTexturedEnabled) QuadTextureDraw(pv * m_quadTransform);
 	if (m_pyramidEnabled) PyramidDraw(pv * m_pyramidTransform);
-	if (m_cylinderEnabled) CylinderDraw(pv * m_cylinderTransform);
+	if (m_discEnabled) DiscDraw(pv * m_discTransform);
+	if (m_coneEnabled) ConeDraw(pv * m_coneTransform);
+	//if (m_cylinderEnabled) CylinderDraw(pv * m_cylinderTransform);
+	if (m_spearEnabled) ObjDraw(pv, m_spearTransform, &m_spearMesh);
+	if (m_batarangEnabled) ObjDraw(pv, m_batarangTransform, &m_batarangMesh);
+
+
+
 
 	Gizmos::draw(m_projectionMatrix * m_viewMatrix);
 }
 
 bool GraphicsApp::LaunchShaders()
 {
+	m_normalLitShader.loadShader(aie::eShaderStage::VERTEX,
+		"./shaders/normalLit.vert");
+	m_normalLitShader.loadShader(aie::eShaderStage::FRAGMENT,
+		"./shaders/normalLit.frag");
+
+	if (m_normalLitShader.link() == false)
+	{
+		printf("Normal Lit Phong shader Error : %s\n", m_normalLitShader.getLastError());
+		return false;
+	}
 
 	if (!QuadLoader())
 		return false;
@@ -180,11 +208,34 @@ bool GraphicsApp::LaunchShaders()
 		return false;
 
 
-	if (!CylinderLoader())
+	if (!DiscLoader())
 		return false;
+
+
+	if (!ConeLoader())
+		return false;
+
+	//if (!CylinderLoader())
+	//	return false;
+
 
 	if (!QuadTextureLoader())
 		return false;
+
+
+	if (!SpearLoader())
+		return false;
+
+	if (!BatarangLoader())
+		return false;
+
+
+
+
+
+
+	m_scene->AddInstance(new Instance(m_spearTransform,
+		&m_spearMesh, &m_normalLitShader));
 
 	return true;
 }
@@ -199,6 +250,8 @@ void GraphicsApp::ImGUIRefresher()
 	ImGui::Begin("Objects");
 	ImGui::Checkbox("Planets", &m_planetsEnabled);
 	ImGui::Checkbox("Bunny", &m_bunnyEnabled);
+	ImGui::Checkbox("Spear", &m_spearEnabled);
+	ImGui::Checkbox("Batarang", &m_batarangEnabled);
 	ImGui::End();
 
 	ImGui::Begin("Shapes");
@@ -206,6 +259,8 @@ void GraphicsApp::ImGUIRefresher()
 	ImGui::Checkbox("Textured Quad", &m_quadTexturedEnabled);
 	ImGui::Checkbox("Box", &m_boxEnabled);
 	ImGui::Checkbox("Pyramid", &m_pyramidEnabled);
+	ImGui::Checkbox("Disc", &m_discEnabled);
+	ImGui::Checkbox("Cone", &m_coneEnabled);
 	ImGui::Checkbox("Cylinder", &m_cylinderEnabled);
 	ImGui::End();
 
@@ -302,7 +357,7 @@ bool GraphicsApp::QuadLoader()
 
 	unsigned int indices[6] = { 0,1,2,2,1,3 };
 
-	m_quadMesh.Initialise(4, vertices, 6, indices);
+	//m_quadMesh.Initialise(4, vertices, 6, indices);
 
 	//m_quadMesh.InitialiseQuad();
 	// This is a 10 'unit' wide quad
@@ -328,7 +383,69 @@ void GraphicsApp::QuadDraw(glm::mat4 pvm)
 	m_quadMesh.Draw();
 }
 
-bool GraphicsApp::CylinderLoader()
+bool GraphicsApp::ConeLoader()
+{
+	m_simpleShader.loadShader(aie::eShaderStage::VERTEX,
+		"./shaders/simple.vert");
+	m_simpleShader.loadShader(aie::eShaderStage::FRAGMENT,
+		"./shaders/simple.frag");
+
+
+	if (!m_simpleShader.link())
+	{
+		printf("Simple Shader has an Error: %\n",
+			m_simpleShader.getLastError());
+		return false;
+	}
+
+	// Defined as 4 vertices for the 2 triangles
+
+	Mesh::Vertex vertices[17];
+	vertices[0].position = { 0, 2,  0, 1 }; // Center
+
+	for (int i = 1; i < 17; i++)
+	{
+		vertices[i].position = { glm::sin(i * 0.45f), 0, glm::cos(i * 0.45f), 1 };
+	}
+
+	unsigned int indices[48];
+
+	for (int i = 0; i < 48; i += 3)
+	{
+		indices[i] = 0;
+		indices[i + 1] = i / 3;
+		indices[i + 2] = i / 3 + 1;
+
+
+	}
+
+	m_coneMesh.Initialise(17, vertices, 48, indices);
+
+	//m_quadMesh.InitialiseQuad();
+	// This is a 10 'unit' wide quad
+	m_coneTransform = {
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0,
+		0, 0, 0, 1
+	};
+}
+
+void GraphicsApp::ConeDraw(glm::mat4 pvm)
+{
+	// Bind the shader
+	m_simpleShader.bind();
+
+	// Bind the transform
+
+	m_simpleShader.bindUniform("ProjectionViewModel", pvm);
+
+	// Bind the color
+
+	m_coneMesh.Draw();
+}
+
+bool GraphicsApp::DiscLoader()
 {
 	m_simpleShader.loadShader(aie::eShaderStage::VERTEX,
 		"./shaders/simple.vert");
@@ -350,25 +467,25 @@ bool GraphicsApp::CylinderLoader()
 
 	for (int i = 1; i < 17; i++)
 	{
-		vertices[i].position = { glm::sin(i *0.5f), 0, glm::cos(i*0.5f), 1 };
+		vertices[i].position = { glm::sin(i * 0.45f), 0, glm::cos(i * 0.45f), 1 };
 	}
 
 	unsigned int indices[48];
-	
+
 	for (int i = 0; i < 48; i += 3)
 	{
 		indices[i] = 0;
 		indices[i + 1] = i / 3;
 		indices[i + 2] = i / 3 + 1;
-	
-		
+
+
 	}
 
-	m_cylinderMesh.Initialise(17, vertices, 48, indices);
+	m_discMesh.Initialise(17, vertices, 48, indices);
 
 	//m_quadMesh.InitialiseQuad();
 	// This is a 10 'unit' wide quad
-	m_cylinderTransform = {
+	m_discTransform = {
 		1, 0, 0, 0,
 		0, 1, 0, 0,
 		0, 0, 1, 0,
@@ -376,7 +493,7 @@ bool GraphicsApp::CylinderLoader()
 	};
 }
 
-void GraphicsApp::CylinderDraw(glm::mat4 pvm)
+void GraphicsApp::DiscDraw(glm::mat4 pvm)
 {
 	// Bind the shader
 	m_simpleShader.bind();
@@ -387,7 +504,7 @@ void GraphicsApp::CylinderDraw(glm::mat4 pvm)
 
 	// Bind the color
 
-	m_cylinderMesh.Draw();
+	m_discMesh.Draw();
 }
 
 
@@ -510,6 +627,82 @@ void GraphicsApp::BunnyDraw(glm::mat4 pvm)
 	m_bunnyMesh.draw();
 }
 
+bool GraphicsApp::SpearLoader()
+{
+
+	if (m_spearMesh.load("./soulspear/soulspear.obj", true, true) == false)
+	{
+		printf("Soulspear Mesh Error!");
+		return false;
+	}
+
+	m_spearTransform = {
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0,
+		0, 0, 0, 2
+	};
+
+	return true;
+}
+
+void GraphicsApp::ObjDraw(glm::mat4 pv, glm::mat4 transform, aie::OBJMesh* objMesh)
+{
+	m_normalLitShader.bind();
+
+	// Bind the camera position
+	m_normalLitShader.bindUniform("CameraPosition",
+		glm::vec3(glm::inverse(m_viewMatrix)[3]));
+
+	m_normalLitShader.bindUniform("LightDirection", m_light.direction);
+	m_normalLitShader.bindUniform("LightColor", m_light.color);
+	m_normalLitShader.bindUniform("AmbientColor", m_ambientLight);
+
+	m_normalLitShader.bindUniform("diffuseTexture", 0);
+	m_normalLitShader.bindUniform("ProjectionViewModel", pv * transform);
+
+	m_normalLitShader.bindUniform("ModelMatrix", transform);
+
+	objMesh->draw();
+
+}
+
+bool GraphicsApp::BatarangLoader()
+{
+
+
+	if (m_batarangMesh.load("./batarang/Batarang_SketchFab.obj", true, true) == false)
+	{
+		printf("Bataraang Mesh Error!");
+		return false;
+	}
+
+	m_batarangTransform = {
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0,
+		0, 0, 0, 0.5f
+	};
+
+	m_batarangTransform = glm::rotate(m_batarangTransform, glm::radians(90.f), glm::vec3(0, 90, 0));
+
+	return true;
+}
+
+
+
+void GraphicsApp::BatarangDraw(glm::mat4 pvm)
+{
+	m_colorShader.bind();
+
+	m_colorShader.bindUniform("ProjectionViewModel", pvm);
+
+	m_colorShader.bindUniform("BaseColor", glm::vec4(1));
+
+	m_batarangMesh.draw();
+
+}
+
 bool GraphicsApp::QuadTextureLoader()
 {
 	m_texturedShader.loadShader(aie::eShaderStage::VERTEX,
@@ -520,7 +713,7 @@ bool GraphicsApp::QuadTextureLoader()
 
 	if (m_texturedShader.link() == false)
 	{
-		printf("Textured Shader has an Error: %s\n", 
+		printf("Textured Shader has an Error: %s\n",
 			m_texturedShader.getLastError());
 		return false;
 	}
@@ -585,5 +778,6 @@ void GraphicsApp::PhongDraw(glm::mat4 pvm, glm::mat4 transform)
 	m_phongShader.bindUniform("ModelMatrix", transform);
 
 	m_bunnyMesh.draw();
+
 
 }

@@ -14,7 +14,7 @@ uniform vec3 Kd; // The different material color
 uniform vec3 Ks; // The specular material color
 uniform float specularPower; // The specular power of the Ks
 
-//uniform vec4 BaseColor;
+// uniform vec4 BaseColor;
 
 // Light data
 uniform vec3 AmbientColor;

@@ -8,6 +8,8 @@
 #include "OBJMesh.h"
 #include <list>
 #include "SimpleCamera.h"
+#include "Scene.h"
+#include"Instance.h"
 
 
 class GraphicsApp : public aie::Application {
@@ -34,8 +36,14 @@ protected:
 	bool QuadLoader();
 	void QuadDraw(glm::mat4 pvm);
 
-	bool CylinderLoader();
-	void CylinderDraw(glm::mat4 pvm);
+	bool ConeLoader();
+	void ConeDraw(glm::mat4 pvm);
+	
+	//bool CylinderLoader();
+	//void CylinderDraw(glm::mat4 pvm);
+
+	bool DiscLoader();
+	void DiscDraw(glm::mat4 pvm);
 
 
 	bool BoxLoader();
@@ -44,10 +52,19 @@ protected:
 	bool BunnyLoader();
 	void BunnyDraw(glm::mat4 pvm);
 
+	bool SpearLoader();
+	void ObjDraw(glm::mat4 pv, glm::mat4 transform, aie::OBJMesh* objMesh);
+
+	bool BatarangLoader();
+	void BatarangDraw(glm::mat4 pvm);
+
 	bool QuadTextureLoader();
 	void QuadTextureDraw(glm::mat4 pvm);
 
 	void PhongDraw(glm::mat4 pvm, glm::mat4 transform);
+
+	Scene*		m_scene;
+
 	// camera transforms
 	glm::mat4	m_viewMatrix;
 	glm::mat4	m_projectionMatrix;
@@ -58,27 +75,39 @@ protected:
 	aie::ShaderProgram  m_colorShader;
 	aie::ShaderProgram  m_phongShader;
 	aie::ShaderProgram m_texturedShader;
+	aie::ShaderProgram m_normalLitShader;
 
 
 	Mesh				m_quadMesh;
 	Mesh				m_boxMesh;
 	Mesh				m_pyramidMesh;
+	Mesh				m_discMesh;
+	Mesh				m_coneMesh;
 	Mesh				m_cylinderMesh;
 
 	glm::mat4			m_quadTransform;
 	glm::mat4           m_boxTransform;
 	glm::mat4           m_pyramidTransform;
+	glm::mat4           m_discTransform;
+	glm::mat4           m_coneTransform;
 	glm::mat4           m_cylinderTransform;
 
 	aie::OBJMesh        m_bunnyMesh;
 	glm::mat4           m_bunnyTransform;
 
+	aie::OBJMesh		m_spearMesh;
+	glm::mat4			m_spearTransform;
+
+	aie::OBJMesh		m_batarangMesh;
+	glm::mat4			m_batarangTransform;
+
+
 	SimpleCamera m_camera;
 
-	struct Light {
-		glm::vec3 direction;
-		glm::vec3 color;
-	};
+	//struct Light {
+	//	glm::vec3 direction;
+	//	glm::vec3 color;
+	//};
 	Light m_light;
 	glm::vec3 m_ambientLight;
 
@@ -103,6 +132,12 @@ protected:
 	bool m_quadEnabled;
 	bool m_quadTexturedEnabled;
 	bool m_pyramidEnabled;
+	bool m_discEnabled;
+	bool m_coneEnabled;
 	bool m_cylinderEnabled;
+	bool m_spearEnabled;
+	bool m_batarangEnabled;
+
+	
 
 };
