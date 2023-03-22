@@ -8,8 +8,7 @@ public:
 	~SimpleCamera() {};
 
 	void Update(float deltaTIme);
-	glm::vec3 GetPosition()
-	{ return m_position; }
+	glm::vec3 GetPosition() { return m_position; }
 	glm::mat4 GetViewMatrix();
 	glm::mat4 GetProjectionMatrix(float width, float height);
 	glm::mat4 GetTransform(glm::vec3 position, 

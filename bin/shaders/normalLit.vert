@@ -5,7 +5,7 @@ layout(location = 1) in vec4 Normal;
 layout(location = 2) in vec2 TexCoord;
 layout(location = 3) in vec4 Tangent;
 
-out vec4 Vposition;
+out vec4 vPosition;
 out vec3 vNormal;
 out vec2 vTexCoord;
 out vec3 vTangent;
@@ -16,7 +16,7 @@ uniform mat4 ModelMatrix; // To transform the normal
 
 void main() 
 {
-    Vposition = ModelMatrix * Position;
+    vPosition = ModelMatrix * Position;
     vNormal = (ModelMatrix * Normal).xyz;
     vTexCoord = TexCoord;
     vTangent = (ModelMatrix * Tangent).xyz;

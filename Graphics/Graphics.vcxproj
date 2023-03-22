@@ -164,6 +164,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CameraBase.cpp" />
     <ClCompile Include="GraphicsApp.cpp" />
     <ClCompile Include="Instance.cpp" />
     <ClCompile Include="main.cpp" />
@@ -176,6 +177,7 @@
     <ClCompile Include="SimpleCamera.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CameraBase.h" />
     <ClInclude Include="GraphicsApp.h" />
     <ClInclude Include="Instance.h" />
     <ClInclude Include="Mesh.h" />

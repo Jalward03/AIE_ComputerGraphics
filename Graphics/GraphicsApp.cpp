@@ -44,6 +44,9 @@ bool GraphicsApp::startup() {
 	m_scene = new Scene(&m_camera, glm::vec2(getWindowWidth(), getWindowHeight()),
 		light, m_ambientLight);
 
+	m_scene->AddPointLights(glm::vec3(5, 3, 0), glm::vec3(1, 0, 0), 50);
+	m_scene->AddPointLights(glm::vec3(-5, 3, 0), glm::vec3(0, 0, 1), 50);
+
 	m_bunnyEnabled = false;
 	m_planetsEnabled = false;
 	m_boxEnabled = false;
@@ -59,7 +62,7 @@ bool GraphicsApp::startup() {
 	Planets();
 	return LaunchShaders();
 
-	return true;
+	
 }
 
 void GraphicsApp::shutdown() {
@@ -230,12 +233,12 @@ bool GraphicsApp::LaunchShaders()
 		return false;
 
 
+	for (int i = 0; i < 10; i++)
+		m_scene->AddInstance(new Instance(glm::vec3(i*2,0,0),
+			glm::vec3(0, i * 30, 0), glm::vec3(1,1,1),
+			&m_spearMesh, &m_normalLitShader));
 
 
-
-
-	m_scene->AddInstance(new Instance(m_spearTransform,
-		&m_spearMesh, &m_normalLitShader));
 
 	return true;
 }
