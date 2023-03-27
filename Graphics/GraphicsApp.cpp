@@ -41,7 +41,7 @@ bool GraphicsApp::startup() {
 	light.direction = { 1,-1,1 };
 
 
-	m_scene = new Scene(&m_camera, glm::vec2(getWindowWidth(), getWindowHeight()),
+	m_scene = new Scene(GetCurrentCamera(), glm::vec2(getWindowWidth(), getWindowHeight()),
 		light, m_ambientLight);
 
 	m_scene->AddPointLights(glm::vec3(5, 3, 0), glm::vec3(1, 0, 0), 50);
@@ -58,6 +58,16 @@ bool GraphicsApp::startup() {
 	m_quadTexturedEnabled = false;
 	m_spearEnabled = false;
 	m_batarangEnabled = false;
+
+	m_flyCameraEnabled = true;
+	m_stationaryCameraXEnabled = false;
+	m_stationaryCameraYEnabled = false;
+	m_stationaryCameraZEnabled = false;
+	m_orbitCameraEnabled = false;
+
+	m_stationaryCameraX.SetPosition(glm::vec3(-1000, 0, 1));
+
+
 
 	Planets();
 	return LaunchShaders();
@@ -118,7 +128,6 @@ void GraphicsApp::update(float deltaTime) {
 	// Rotate the light to emulate a 'day/night' cycle
 	m_light.direction = glm::normalize(glm::vec3(glm::cos(time * 2), glm::sin(time * 2), 0));
 
-	m_camera.Update(deltaTime);
 
 
 	for (auto planet : m_planets)
@@ -138,11 +147,16 @@ void GraphicsApp::update(float deltaTime) {
 	m_discTransform = glm::rotate(m_discTransform, 0.05f, glm::vec3(0, 1, 1));
 	m_coneTransform = glm::rotate(m_coneTransform, 0.05f, glm::vec3(0, 1, 1));
 
-
+	if (m_flyCameraEnabled) m_flyCamera.Update(deltaTime);
+	if (m_stationaryCameraXEnabled) m_stationaryCameraX.Update(deltaTime);
+	if (m_stationaryCameraYEnabled) m_stationaryCameraY.Update(deltaTime);
+	if (m_stationaryCameraZEnabled) m_stationaryCameraZ.Update(deltaTime);
 }
 
 void GraphicsApp::draw() {
 
+	// Bind the render target 
+	m_renderTarget.bind();
 
 	// wipe the screen to the background colour
 	clearScreen();
@@ -151,13 +165,21 @@ void GraphicsApp::draw() {
 
 	// update perspective based on screen size
 	//m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f, getWindowWidth() / (float)getWindowHeight(), 0.1f, 1000.0f);
-	m_viewMatrix = m_camera.GetViewMatrix();
-	m_projectionMatrix = m_camera.GetProjectionMatrix(getWindowWidth(),
-		getWindowHeight());
+
+
+	if (m_flyCameraEnabled) CamDraw(m_flyCamera);
+	if (m_stationaryCameraXEnabled) CamDraw(m_stationaryCameraX);
+	if (m_stationaryCameraYEnabled) CamDraw(m_stationaryCameraY);
+	if (m_stationaryCameraZEnabled) CamDraw(m_stationaryCameraZ);
+
 	auto pv = m_projectionMatrix * m_viewMatrix;
 
 	m_scene->Draw();
 
+	// Unbind the target to return to the backbuffer
+	m_renderTarget.unbind();
+
+	clearScreen();
 
 	if (m_planetsEnabled)
 	{
@@ -179,13 +201,44 @@ void GraphicsApp::draw() {
 	if (m_batarangEnabled) ObjDraw(pv, m_batarangTransform, &m_batarangMesh);
 
 
-
-
 	Gizmos::draw(m_projectionMatrix * m_viewMatrix);
+}
+
+void GraphicsApp::CamDraw(CameraBase cam)
+{
+	m_viewMatrix = cam.GetViewMatrix();
+	m_projectionMatrix = cam.GetProjectionMatrix(getWindowWidth(),
+		getWindowHeight());
+}
+
+void GraphicsApp::DisableCams()
+{
+	m_flyCameraEnabled = false;
+	m_stationaryCameraXEnabled = false;
+	m_stationaryCameraYEnabled = false;
+	m_stationaryCameraZEnabled = false;
+	m_orbitCameraEnabled = false;
+}
+
+CameraBase GraphicsApp::GetCurrentCamera()
+{
+	if (m_flyCameraEnabled)			return m_flyCamera;
+	if (m_stationaryCameraXEnabled) return m_stationaryCameraX;
+	if (m_stationaryCameraYEnabled) return m_stationaryCameraY;
+	if (m_stationaryCameraZEnabled) return m_stationaryCameraZ;
 }
 
 bool GraphicsApp::LaunchShaders()
 {
+	if (m_renderTarget.initialise(1, getWindowWidth(),
+		getWindowHeight()) == false)
+	{
+		printf("Render Target Error!\n");
+		return false;
+	}
+
+
+
 	m_normalLitShader.loadShader(aie::eShaderStage::VERTEX,
 		"./shaders/normalLit.vert");
 	m_normalLitShader.loadShader(aie::eShaderStage::FRAGMENT,
@@ -267,6 +320,39 @@ void GraphicsApp::ImGUIRefresher()
 	ImGui::Checkbox("Cylinder", &m_cylinderEnabled);
 	ImGui::End();
 
+	ImGui::Begin("Cameras");
+	if (ImGui::Button("Fly Camera"))
+	{
+		m_scene->SetCamera(m_flyCamera);
+		DisableCams();
+
+		m_flyCameraEnabled = true;
+	}
+	if (ImGui::CollapsingHeader("Stationary Camera"))
+	{
+		if (ImGui::Button("X"))
+		{
+			m_scene->SetCamera(m_stationaryCameraX);
+			DisableCams();
+
+			m_stationaryCameraXEnabled = true;
+		}
+		if (ImGui::Button("Y"))
+		{
+			m_scene->SetCamera(m_stationaryCameraY);
+			DisableCams();
+
+			m_stationaryCameraYEnabled = true;
+		}
+		if (ImGui::Button("Z"))
+		{
+			m_scene->SetCamera(m_stationaryCameraZ);
+			DisableCams();
+
+			m_stationaryCameraZEnabled = true;
+		}
+	}
+	ImGui::End();
 
 }
 
@@ -756,8 +842,9 @@ void GraphicsApp::QuadTextureDraw(glm::mat4 pvm)
 	m_texturedShader.bindUniform("diffuseTexture", 0);
 
 	// Bind the texture to a specific location
-	m_gridTexture.bind(0);
+	//m_gridTexture.bind(0);
 
+	m_renderTarget.getTarget(0).bind(0);
 	// Bind the color
 
 	m_quadMesh.Draw();

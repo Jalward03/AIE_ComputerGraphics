@@ -1,15 +1,17 @@
-#include "SimpleCamera.h"
+#include "FlyCamera.h"
 #include <glm/ext.hpp>
 #include "Input.h"
 
-SimpleCamera::SimpleCamera()
+
+FlyCamera::FlyCamera() 
 {
 	m_position = glm::vec3(-10, 2, 0);
 	m_phi = 0;
 	m_theta = 0;
+	m_moveSpeed = 1;
 }
 
-void SimpleCamera::Update(float deltaTIme)
+void FlyCamera::Update(float deltaTIme)
 {
 	aie::Input* input = aie::Input::getInstance();
 	float thetaR = glm::radians(m_theta);
@@ -24,20 +26,20 @@ void SimpleCamera::Update(float deltaTIme)
 	// WASD to Move, QE to go Up and Down
 
 	if (input->isKeyDown(aie::INPUT_KEY_W))
-		m_position += forward * deltaTIme;
+		m_position += forward * deltaTIme * m_moveSpeed;
 	if (input->isKeyDown(aie::INPUT_KEY_S))
-		m_position -= forward * deltaTIme;
+		m_position -= forward * deltaTIme * m_moveSpeed;
 	if (input->isKeyDown(aie::INPUT_KEY_A))
-		m_position -= right * deltaTIme;
+		m_position -= right * deltaTIme * m_moveSpeed;
 	if (input->isKeyDown(aie::INPUT_KEY_D))
-		m_position += right * deltaTIme;
+		m_position += right * deltaTIme * m_moveSpeed;
 
 	if (input->isKeyDown(aie::INPUT_KEY_Q))
-		m_position += up * deltaTIme;
+		m_position += up * deltaTIme * m_moveSpeed;
 	if (input->isKeyDown(aie::INPUT_KEY_E))
-		m_position -= up * deltaTIme;
+		m_position -= up * deltaTIme * m_moveSpeed;
 
-
+	m_moveSpeed = input->isKeyDown(aie::INPUT_KEY_LEFT_SHIFT) ? 4 : 1;
 	// Get the nouse coordinates
 	float mx = input->getMouseX();
 	float my = input->getMouseY();
@@ -53,7 +55,7 @@ void SimpleCamera::Update(float deltaTIme)
 
 }
 
-glm::mat4 SimpleCamera::GetViewMatrix()
+glm::mat4 FlyCamera::GetViewMatrix()
 {
 	float thetaR = glm::radians(m_theta);
 	float phiR = glm::radians(m_phi);
@@ -64,13 +66,13 @@ glm::mat4 SimpleCamera::GetViewMatrix()
 	return glm::lookAt(m_position, m_position + forward, glm::vec3(0, 1, 0));
 }
 
-glm::mat4 SimpleCamera::GetProjectionMatrix(float width, float height)
+glm::mat4 FlyCamera::GetProjectionMatrix(float width, float height)
 {
 	return glm::perspective(glm::pi<float>() * 0.25f, width/height,
 		0.1f, 1000.f);
 }
 
-glm::mat4 SimpleCamera::GetTransform(glm::vec3 position, glm::vec3 eularAngles, glm::vec3 scale)
+glm::mat4 FlyCamera::GetTransform(glm::vec3 position, glm::vec3 eularAngles, glm::vec3 scale)
 {
 	return glm::mat4();
 }

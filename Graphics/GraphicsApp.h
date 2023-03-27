@@ -7,9 +7,14 @@
 #include "Planet.h"
 #include "OBJMesh.h"
 #include <list>
-#include "SimpleCamera.h"
+#include "FlyCamera.h"
+#include "StationaryCamera.h"
 #include "Scene.h"
 #include"Instance.h"
+#include "CameraBase.h"
+
+
+#include "RenderTarget.h"
 
 
 class GraphicsApp : public aie::Application {
@@ -17,15 +22,17 @@ public:
 
 	GraphicsApp();
 	virtual ~GraphicsApp();
-
+	
 	virtual bool startup();
 	virtual void shutdown();
 	void Planets();
 
 	virtual void update(float deltaTime);
 	virtual void draw();
+	void CamDraw(CameraBase cam);
+	void DisableCams();
 
-
+	CameraBase GetCurrentCamera();
 protected:
 	bool LaunchShaders();
 	void ImGUIRefresher();
@@ -77,6 +84,8 @@ protected:
 	aie::ShaderProgram m_texturedShader;
 	aie::ShaderProgram m_normalLitShader;
 
+	aie::RenderTarget m_renderTarget;
+
 
 	Mesh				m_quadMesh;
 	Mesh				m_boxMesh;
@@ -101,8 +110,11 @@ protected:
 	aie::OBJMesh		m_batarangMesh;
 	glm::mat4			m_batarangTransform;
 
-
-	SimpleCamera m_camera;
+	FlyCamera m_flyCamera;
+	StationaryCamera m_stationaryCameraX;
+	StationaryCamera m_stationaryCameraY;
+	StationaryCamera m_stationaryCameraZ;
+	//CameraBase m_cameras = m_camera;
 
 	//struct Light {
 	//	glm::vec3 direction;
@@ -138,6 +150,12 @@ protected:
 	bool m_spearEnabled;
 	bool m_batarangEnabled;
 
+
+	bool m_flyCameraEnabled;
+	bool m_stationaryCameraXEnabled;
+	bool m_stationaryCameraYEnabled;
+	bool m_stationaryCameraZEnabled;
+	bool m_orbitCameraEnabled;
 	
 
 };

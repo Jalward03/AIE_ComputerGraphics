@@ -2,8 +2,9 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <list>
+#include "CameraBase.h"
 
-class SimpleCamera;
+class CameraBase;
 class Instance;
 
 const int MAX_LIGHTS = 4;
@@ -30,7 +31,7 @@ struct Light
 class Scene
 {
 public:
-	Scene(SimpleCamera* camera, glm::vec2 windowSize,
+	Scene(CameraBase camera, glm::vec2 windowSize,
 		Light& light, glm::vec3 ambientLightColor);
 
 	~Scene();
@@ -43,7 +44,8 @@ public:
 		m_pointLights.push_back(Light(direction, color, intensity));
 	}
 
-	SimpleCamera* GetCamera() { return m_camera; }
+	CameraBase GetCamera() { return m_camera; }
+	void SetCamera(CameraBase cam) { m_camera = cam; }
 	glm::vec2 GetWindowSize();
 	glm::vec3 GetAmbientLightColor() { return m_ambientLightColor; }
 	Light GetLight() { return m_light; }
@@ -55,7 +57,7 @@ public:
 	
 
 protected:
-	SimpleCamera* m_camera;
+	CameraBase m_camera;
 	glm::vec2 m_windowSize;
 	std::vector<Light> m_pointLights;
 	Light m_sunLight;
