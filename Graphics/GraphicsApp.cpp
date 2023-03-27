@@ -100,7 +100,7 @@ void GraphicsApp::Planets()
 
 void GraphicsApp::update(float deltaTime) {
 
-
+	std::cout << m_flyCameraEnabled;
 
 	// wipe the gizmos clean for this frame
 	Gizmos::clear();
@@ -175,6 +175,7 @@ void GraphicsApp::draw() {
 	auto pv = m_projectionMatrix * m_viewMatrix;
 
 	m_scene->Draw();
+	Gizmos::draw(m_projectionMatrix * m_viewMatrix);
 
 	// Unbind the target to return to the backbuffer
 	m_renderTarget.unbind();
@@ -200,8 +201,14 @@ void GraphicsApp::draw() {
 	if (m_spearEnabled) ObjDraw(pv, m_spearTransform, &m_spearMesh);
 	if (m_batarangEnabled) ObjDraw(pv, m_batarangTransform, &m_batarangMesh);
 
+	// Bind the post process shader and the texturee
+	m_postProcessShader.bind();
+	m_postProcessShader.bindUniform("colorTarget", 0);
+	m_postProcessShader.bindUniform("postProcessTarget", m_postProcessEffect);
+	m_renderTarget.getTarget(0).bind(0);
+	m_fullScreenQuad.Draw();
 
-	Gizmos::draw(m_projectionMatrix * m_viewMatrix);
+
 }
 
 void GraphicsApp::CamDraw(CameraBase cam)
@@ -246,9 +253,22 @@ bool GraphicsApp::LaunchShaders()
 
 	if (m_normalLitShader.link() == false)
 	{
-		printf("Normal Lit Phong shader Error : %s\n", m_normalLitShader.getLastError());
+		printf("Normal Lit shader Error : %s\n", m_normalLitShader.getLastError());
 		return false;
 	}
+
+
+	m_postProcessShader.loadShader(aie::eShaderStage::VERTEX,
+		"./shaders/post.vert");
+	m_postProcessShader.loadShader(aie::eShaderStage::FRAGMENT,
+		"./shaders/post.frag");
+
+	if (m_postProcessShader.link() == false)
+	{
+		printf("Normal Lit Post shader Error : %s\n", m_postProcessShader.getLastError());
+		return false;
+	}
+
 
 	if (!QuadLoader())
 		return false;
@@ -291,7 +311,7 @@ bool GraphicsApp::LaunchShaders()
 			glm::vec3(0, i * 30, 0), glm::vec3(1,1,1),
 			&m_spearMesh, &m_normalLitShader));
 
-
+	m_fullScreenQuad.InitialiseFullscreenQuad();
 
 	return true;
 }

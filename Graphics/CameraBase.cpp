@@ -9,6 +9,10 @@ CameraBase::CameraBase()
 	m_theta = 0;
 }
 
+void CameraBase::Update(float deltaTime)
+{
+}
+
 glm::mat4 CameraBase::GetViewMatrix()
 {
 	float thetaR = glm::radians(m_theta);

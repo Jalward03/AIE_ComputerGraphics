@@ -8,7 +8,7 @@ class CameraBase
 public:
 	CameraBase();
 	~CameraBase() {};
-	//void Update(float deltaTime);
+	void Update(float deltaTime);
 	glm::vec3 GetPosition() { return m_position; }
 	glm::mat4 GetViewMatrix();
 	glm::mat4 GetProjectionMatrix(float width, float height);
