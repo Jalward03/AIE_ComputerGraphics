@@ -31,21 +31,22 @@ struct Light
 class Scene
 {
 public:
-	Scene(CameraBase camera, glm::vec2 windowSize,
+	Scene(CameraBase* camera, glm::vec2 windowSize,
 		Light& light, glm::vec3 ambientLightColor);
 
 	~Scene();
 	void AddInstance(Instance* instance);
 
 	void Draw();
+	//void Update(float dt);
 	void AddPointLights(Light light) { m_pointLights.push_back(light); }
 	void AddPointLights(glm::vec3 direction, glm::vec3 color, float intensity)
 	{
 		m_pointLights.push_back(Light(direction, color, intensity));
 	}
 
-	CameraBase GetCamera() { return m_camera; }
-	void SetCamera(CameraBase cam) { m_camera = cam; }
+	CameraBase* GetCamera() { return m_camera; }
+	void SetCamera(CameraBase* cam) { m_camera = cam; }
 	glm::vec2 GetWindowSize();
 	glm::vec3 GetAmbientLightColor() { return m_ambientLightColor; }
 	Light GetLight() { return m_light; }
@@ -57,7 +58,7 @@ public:
 	
 
 protected:
-	CameraBase m_camera;
+	CameraBase* m_camera;
 	glm::vec2 m_windowSize;
 	std::vector<Light> m_pointLights;
 	Light m_sunLight;

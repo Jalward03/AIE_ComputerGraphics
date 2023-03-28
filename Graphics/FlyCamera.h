@@ -8,11 +8,7 @@ class FlyCamera : public CameraBase
 public:
 	FlyCamera();
 	~FlyCamera() {};
-	glm::vec3 GetPosition() { return m_position; }
-	glm::mat4 GetViewMatrix();
-	glm::mat4 GetProjectionMatrix(float width, float height);
-	glm::mat4 GetTransform(glm::vec3 position,
-		glm::vec3 eularAngles, glm::vec3 scale);
+
 	virtual void Update(float deltaTIme);
 
 protected:

@@ -1,5 +1,6 @@
 #include "CameraBase.h"
 #include <glm/ext.hpp>
+#include <glm/glm.hpp>
 
 
 CameraBase::CameraBase()
@@ -32,6 +33,14 @@ glm::mat4 CameraBase::GetProjectionMatrix(float width, float height)
 
 glm::mat4 CameraBase::GetTransform(glm::vec3 position, glm::vec3 eularAngles, glm::vec3 scale)
 {
-	return glm::mat4();
+	return glm::translate(glm::mat4(1), position)
+		* glm::rotate(glm::mat4(1),
+			glm::radians(eularAngles.z), glm::vec3(0, 0, 1))
+		* glm::rotate(glm::mat4(1),
+			glm::radians(eularAngles.y), glm::vec3(0, 1, 1))
+		* glm::rotate(glm::mat4(1),
+			glm::radians(eularAngles.x), glm::vec3(1, 0, 1))
+		* glm::scale(glm::mat4(1), scale);
+		
 }
 

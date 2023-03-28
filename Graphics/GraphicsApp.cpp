@@ -18,30 +18,39 @@ GraphicsApp::GraphicsApp()
 
 GraphicsApp::~GraphicsApp() {
 
+	if (m_baseCamera != nullptr)
+		delete m_baseCamera;
 }
 
 bool GraphicsApp::startup() {
-
+	
 	setBackgroundColour(0.25f, 0.25f, 0.25f);
 
 	// initialise gizmo primitive counts
 	Gizmos::create(10000, 10000, 10000, 10000);
 
-	m_viewMatrix =
-		glm::lookAt(vec3(10), vec3(0), vec3(0, 1, 0));
-	// create simple camera transforms
-	m_projectionMatrix =
-		glm::perspective(glm::pi<float>() * 0.25f, 16.0f / 9.0f, 0.1f, 1000.0f);
+	//m_viewMatrix =
+	//	glm::lookAt(vec3(10), vec3(0), vec3(0, 1, 0));
+	//// create simple camera transforms
+	//m_projectionMatrix =
+	//	glm::perspective(glm::pi<float>() * 0.25f, 16.0f / 9.0f, 0.1f, 1000.0f);
+	m_baseCamera = new CameraBase();
 
+	m_viewMatrix = m_baseCamera->GetViewMatrix();
 
-	m_ambientLight = { 0.5,0.5,0.5 };
+	m_projectionMatrix = m_baseCamera->GetProjectionMatrix(getWindowWidth(),
+		getWindowHeight());
 
 	Light light;
 	light.color = { 1,1,1 };
 	light.direction = { 1,-1,1 };
 
 
-	m_scene = new Scene(GetCurrentCamera(), glm::vec2(getWindowWidth(), getWindowHeight()),
+	m_emitter = new ParticleEmitter();
+	m_emitter->Initialise(1000, 500, .1f, 1.0f, 1, 5, 1, .1f,
+		glm::vec4(0, 0, 1, 1), glm::vec4(0, 1, 0, 1));
+
+	m_scene = new Scene(m_baseCamera, glm::vec2(getWindowWidth(), getWindowHeight()),
 		light, m_ambientLight);
 
 	m_scene->AddPointLights(glm::vec3(5, 3, 0), glm::vec3(1, 0, 0), 50);
@@ -59,20 +68,18 @@ bool GraphicsApp::startup() {
 	m_spearEnabled = false;
 	m_batarangEnabled = false;
 
-	m_flyCameraEnabled = true;
+	m_flyCameraEnabled = false;
 	m_stationaryCameraXEnabled = false;
 	m_stationaryCameraYEnabled = false;
 	m_stationaryCameraZEnabled = false;
 	m_orbitCameraEnabled = false;
 
-	m_stationaryCameraX.SetPosition(glm::vec3(-1000, 0, 1));
 
 
 
 	Planets();
 	return LaunchShaders();
 
-	
 }
 
 void GraphicsApp::shutdown() {
@@ -100,7 +107,7 @@ void GraphicsApp::Planets()
 
 void GraphicsApp::update(float deltaTime) {
 
-	std::cout << m_flyCameraEnabled;
+	//std::cout << m_flyCameraEnabled;
 
 	// wipe the gizmos clean for this frame
 	Gizmos::clear();
@@ -140,17 +147,26 @@ void GraphicsApp::update(float deltaTime) {
 	if (input->isKeyDown(aie::INPUT_KEY_ESCAPE))
 		quit();
 
+	
+
+
+	m_emitter->Update(deltaTime, m_scene->GetCamera()->GetTransform(
+		m_baseCamera->GetPosition(), glm::vec3(0), glm::vec3(1)));
+
 	ImGUIRefresher();
+
+
+
+	
+
+	m_baseCamera->Update(deltaTime);
 
 	m_boxTransform = glm::rotate(m_boxTransform, 0.05f, glm::vec3(0, 1, 1));
 	m_pyramidTransform = glm::rotate(m_pyramidTransform, 0.05f, glm::vec3(0, 1, 1));
 	m_discTransform = glm::rotate(m_discTransform, 0.05f, glm::vec3(0, 1, 1));
 	m_coneTransform = glm::rotate(m_coneTransform, 0.05f, glm::vec3(0, 1, 1));
 
-	if (m_flyCameraEnabled) m_flyCamera.Update(deltaTime);
-	if (m_stationaryCameraXEnabled) m_stationaryCameraX.Update(deltaTime);
-	if (m_stationaryCameraYEnabled) m_stationaryCameraY.Update(deltaTime);
-	if (m_stationaryCameraZEnabled) m_stationaryCameraZ.Update(deltaTime);
+
 }
 
 void GraphicsApp::draw() {
@@ -166,21 +182,14 @@ void GraphicsApp::draw() {
 	// update perspective based on screen size
 	//m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f, getWindowWidth() / (float)getWindowHeight(), 0.1f, 1000.0f);
 
-
-	if (m_flyCameraEnabled) CamDraw(m_flyCamera);
-	if (m_stationaryCameraXEnabled) CamDraw(m_stationaryCameraX);
-	if (m_stationaryCameraYEnabled) CamDraw(m_stationaryCameraY);
-	if (m_stationaryCameraZEnabled) CamDraw(m_stationaryCameraZ);
+	//CamDraw(m_baseCamera);
+	m_viewMatrix = m_baseCamera->GetViewMatrix();
+	m_projectionMatrix = m_baseCamera->GetProjectionMatrix(getWindowWidth(),
+		getWindowHeight());
 
 	auto pv = m_projectionMatrix * m_viewMatrix;
 
 	m_scene->Draw();
-	Gizmos::draw(m_projectionMatrix * m_viewMatrix);
-
-	// Unbind the target to return to the backbuffer
-	m_renderTarget.unbind();
-
-	clearScreen();
 
 	if (m_planetsEnabled)
 	{
@@ -201,20 +210,31 @@ void GraphicsApp::draw() {
 	if (m_spearEnabled) ObjDraw(pv, m_spearTransform, &m_spearMesh);
 	if (m_batarangEnabled) ObjDraw(pv, m_batarangTransform, &m_batarangMesh);
 
+	m_particleShader.bind();
+	m_particleShader.bindUniform("ProjectionViewModel", pv * m_particleEmitTransform);
+	m_emitter->Draw();
+
+	Gizmos::draw(m_projectionMatrix * m_viewMatrix);
+	// Unbind the target to return to the backbuffer
+	m_renderTarget.unbind();
+
+	clearScreen();
 	// Bind the post process shader and the texturee
 	m_postProcessShader.bind();
 	m_postProcessShader.bindUniform("colorTarget", 0);
 	m_postProcessShader.bindUniform("postProcessTarget", m_postProcessEffect);
+	m_postProcessShader.bindUniform("windowWidth", (int)getWindowWidth());
+	m_postProcessShader.bindUniform("windowHeight", (int)getWindowHeight());
 	m_renderTarget.getTarget(0).bind(0);
 	m_fullScreenQuad.Draw();
 
 
 }
 
-void GraphicsApp::CamDraw(CameraBase cam)
+void GraphicsApp::CamDraw(CameraBase* cam)
 {
-	m_viewMatrix = cam.GetViewMatrix();
-	m_projectionMatrix = cam.GetProjectionMatrix(getWindowWidth(),
+	m_viewMatrix = cam->GetViewMatrix();
+	m_projectionMatrix = cam->GetProjectionMatrix(getWindowWidth(),
 		getWindowHeight());
 }
 
@@ -227,13 +247,6 @@ void GraphicsApp::DisableCams()
 	m_orbitCameraEnabled = false;
 }
 
-CameraBase GraphicsApp::GetCurrentCamera()
-{
-	if (m_flyCameraEnabled)			return m_flyCamera;
-	if (m_stationaryCameraXEnabled) return m_stationaryCameraX;
-	if (m_stationaryCameraYEnabled) return m_stationaryCameraY;
-	if (m_stationaryCameraZEnabled) return m_stationaryCameraZ;
-}
 
 bool GraphicsApp::LaunchShaders()
 {
@@ -244,6 +257,12 @@ bool GraphicsApp::LaunchShaders()
 		return false;
 	}
 
+	m_particleEmitTransform = {
+	1, 0, 0, 0,
+	0, 1, 0, 0,
+	0, 0, 1, 0,
+	0, 0, 0, 1
+	};
 
 
 	m_normalLitShader.loadShader(aie::eShaderStage::VERTEX,
@@ -257,7 +276,7 @@ bool GraphicsApp::LaunchShaders()
 		return false;
 	}
 
-
+	// Post processing
 	m_postProcessShader.loadShader(aie::eShaderStage::VERTEX,
 		"./shaders/post.vert");
 	m_postProcessShader.loadShader(aie::eShaderStage::FRAGMENT,
@@ -266,6 +285,18 @@ bool GraphicsApp::LaunchShaders()
 	if (m_postProcessShader.link() == false)
 	{
 		printf("Normal Lit Post shader Error : %s\n", m_postProcessShader.getLastError());
+		return false;
+	}
+
+	// Particle shader
+	m_particleShader.loadShader(aie::eShaderStage::VERTEX,
+		"./shaders/particle.vert");
+	m_particleShader.loadShader(aie::eShaderStage::FRAGMENT,
+		"./shaders/particle.frag");
+
+	if (m_particleShader.link() == false)
+	{
+		printf("Particle shader Error : %s\n", m_particleShader.getLastError());
 		return false;
 	}
 
@@ -307,8 +338,8 @@ bool GraphicsApp::LaunchShaders()
 
 
 	for (int i = 0; i < 10; i++)
-		m_scene->AddInstance(new Instance(glm::vec3(i*2,0,0),
-			glm::vec3(0, i * 30, 0), glm::vec3(1,1,1),
+		m_scene->AddInstance(new Instance(glm::vec3(i * 2, 0, 0),
+			glm::vec3(0, i * 30, 0), glm::vec3(1, 1, 1),
 			&m_spearMesh, &m_normalLitShader));
 
 	m_fullScreenQuad.InitialiseFullscreenQuad();
@@ -318,11 +349,17 @@ bool GraphicsApp::LaunchShaders()
 
 void GraphicsApp::ImGUIRefresher()
 {
+	ImGui::Begin("Post Processing");
+	ImGui::InputInt("Post Process Effect", &m_postProcessEffect);
+	ImGui::End();
+
+
 	ImGui::Begin("Light Settings");
 	ImGui::DragFloat3("Global Light Direction", &m_light.direction[0], 0.1, -1, 1);
 	ImGui::DragFloat3("Global Light Color", &m_light.color[0], 0.1, 0, 1);
 	ImGui::End();
 
+	
 	ImGui::Begin("Objects");
 	ImGui::Checkbox("Planets", &m_planetsEnabled);
 	ImGui::Checkbox("Bunny", &m_bunnyEnabled);
@@ -343,33 +380,21 @@ void GraphicsApp::ImGUIRefresher()
 	ImGui::Begin("Cameras");
 	if (ImGui::Button("Fly Camera"))
 	{
-		m_scene->SetCamera(m_flyCamera);
-		DisableCams();
-
-		m_flyCameraEnabled = true;
+		*m_baseCamera = m_flyCamera;
 	}
 	if (ImGui::CollapsingHeader("Stationary Camera"))
 	{
 		if (ImGui::Button("X"))
 		{
-			m_scene->SetCamera(m_stationaryCameraX);
-			DisableCams();
+			
 
-			m_stationaryCameraXEnabled = true;
 		}
 		if (ImGui::Button("Y"))
 		{
-			m_scene->SetCamera(m_stationaryCameraY);
-			DisableCams();
-
-			m_stationaryCameraYEnabled = true;
+		
 		}
 		if (ImGui::Button("Z"))
 		{
-			m_scene->SetCamera(m_stationaryCameraZ);
-			DisableCams();
-
-			m_stationaryCameraZEnabled = true;
 		}
 	}
 	ImGui::End();

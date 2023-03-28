@@ -28,14 +28,14 @@ void Instance::Draw(Scene* scene)
 	m_shader->bind();
 
 	// Bind all relevant uniforms for our shaders
-	auto pvm = scene->GetCamera().GetProjectionMatrix(
+	auto pvm = scene->GetCamera()->GetProjectionMatrix(
 		scene->GetWindowSize().x, scene->GetWindowSize().y) *
-		scene->GetCamera().GetViewMatrix() * m_transform;
+		scene->GetCamera()->GetViewMatrix() * m_transform;
 
 	m_shader->bindUniform("ProjectionViewModel", pvm);
 	m_shader->bindUniform("ModelMatrix", m_transform);
 
-	m_shader->bindUniform("CameraPosition", scene->GetCamera().GetPosition());
+	m_shader->bindUniform("CameraPosition", scene->GetCamera()->GetPosition());
 
 	int numberOfLights = scene->NumberOfLights();
 	m_shader->bindUniform("numLights", numberOfLights);

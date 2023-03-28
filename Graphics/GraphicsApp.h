@@ -12,6 +12,7 @@
 #include "Scene.h"
 #include"Instance.h"
 #include "CameraBase.h"
+#include "ParticleEmitter.h"
 
 
 #include "RenderTarget.h"
@@ -29,10 +30,10 @@ public:
 
 	virtual void update(float deltaTime);
 	virtual void draw();
-	void CamDraw(CameraBase cam);
+	void CamDraw(CameraBase* cam);
 	void DisableCams();
 
-	CameraBase GetCurrentCamera();
+	
 protected:
 	bool LaunchShaders();
 	void ImGUIRefresher();
@@ -70,7 +71,7 @@ protected:
 
 	void PhongDraw(glm::mat4 pvm, glm::mat4 transform);
 
-	int m_postProcessEffect = 1;
+	int m_postProcessEffect = -1;
 
 	Scene*		m_scene;
 
@@ -86,6 +87,7 @@ protected:
 	aie::ShaderProgram m_texturedShader;
 	aie::ShaderProgram m_normalLitShader;
 	aie::ShaderProgram m_postProcessShader;
+	aie::ShaderProgram m_particleShader;
 
 	aie::RenderTarget m_renderTarget;
 
@@ -114,6 +116,7 @@ protected:
 	aie::OBJMesh		m_batarangMesh;
 	glm::mat4			m_batarangTransform;
 
+	CameraBase* m_baseCamera;
 	FlyCamera m_flyCamera;
 	StationaryCamera m_stationaryCameraX;
 	StationaryCamera m_stationaryCameraY;
@@ -126,6 +129,9 @@ protected:
 	//};
 	Light m_light;
 	glm::vec3 m_ambientLight;
+
+	ParticleEmitter* m_emitter;
+	glm::mat4 m_particleEmitTransform;
 
 	std::list<Planet*> m_planets;
  	
