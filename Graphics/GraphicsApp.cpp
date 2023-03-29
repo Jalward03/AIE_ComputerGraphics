@@ -29,12 +29,14 @@ bool GraphicsApp::startup() {
 	// initialise gizmo primitive counts
 	Gizmos::create(10000, 10000, 10000, 10000);
 
+	//m_flyCamera = new FlyCamera();
+
+	
 	//m_viewMatrix =
 	//	glm::lookAt(vec3(10), vec3(0), vec3(0, 1, 0));
 	//// create simple camera transforms
 	//m_projectionMatrix =
 	//	glm::perspective(glm::pi<float>() * 0.25f, 16.0f / 9.0f, 0.1f, 1000.0f);
-	m_baseCamera = new CameraBase();
 
 	m_viewMatrix = m_baseCamera->GetViewMatrix();
 
@@ -155,11 +157,11 @@ void GraphicsApp::update(float deltaTime) {
 
 	ImGUIRefresher();
 
-
-
 	
 
 	m_baseCamera->Update(deltaTime);
+	
+	//if(m_flyCameraEnabled) m_flyCamera.Update(deltaTime);
 
 	m_boxTransform = glm::rotate(m_boxTransform, 0.05f, glm::vec3(0, 1, 1));
 	m_pyramidTransform = glm::rotate(m_pyramidTransform, 0.05f, glm::vec3(0, 1, 1));
@@ -343,7 +345,7 @@ bool GraphicsApp::LaunchShaders()
 			&m_spearMesh, &m_normalLitShader));
 
 	m_fullScreenQuad.InitialiseFullscreenQuad();
-
+	
 	return true;
 }
 
@@ -380,7 +382,8 @@ void GraphicsApp::ImGUIRefresher()
 	ImGui::Begin("Cameras");
 	if (ImGui::Button("Fly Camera"))
 	{
-		*m_baseCamera = m_flyCamera;
+		m_baseCamera = &m_flyCamera;
+	//	m_flyCameraEnabled = !m_flyCameraEnabled;
 	}
 	if (ImGui::CollapsingHeader("Stationary Camera"))
 	{
@@ -641,7 +644,6 @@ void GraphicsApp::DiscDraw(glm::mat4 pvm)
 	m_discMesh.Draw();
 }
 
-
 bool GraphicsApp::BoxLoader()
 {
 	m_simpleShader.loadShader(aie::eShaderStage::VERTEX,
@@ -822,7 +824,6 @@ bool GraphicsApp::BatarangLoader()
 
 	return true;
 }
-
 
 
 void GraphicsApp::BatarangDraw(glm::mat4 pvm)

@@ -9,7 +9,7 @@ public:
 	FlyCamera();
 	~FlyCamera() {};
 
-	virtual void Update(float deltaTIme);
+	void Update(float deltaTIme);
 
 protected:
 	float m_theta;

@@ -118,7 +118,7 @@ protected:
 
 	CameraBase* m_baseCamera;
 	FlyCamera m_flyCamera;
-	StationaryCamera m_stationaryCameraX;
+	StationaryCamera* m_stationaryCameraX;
 	StationaryCamera m_stationaryCameraY;
 	StationaryCamera m_stationaryCameraZ;
 	//CameraBase m_cameras = m_camera;

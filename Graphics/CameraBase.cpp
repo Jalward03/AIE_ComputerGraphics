@@ -12,7 +12,9 @@ CameraBase::CameraBase()
 
 void CameraBase::Update(float deltaTime)
 {
+	//
 }
+
 
 glm::mat4 CameraBase::GetViewMatrix()
 {
