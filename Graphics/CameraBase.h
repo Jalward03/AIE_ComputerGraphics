@@ -25,6 +25,7 @@ protected:
 	glm::vec3 m_position;
 
 	glm::vec2 m_lastMouse;
+	float m_moveSpeed;
 };
 
 

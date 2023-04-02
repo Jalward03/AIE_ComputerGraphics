@@ -38,7 +38,7 @@ public:
 	void AddInstance(Instance* instance);
 
 	void Draw();
-	//void Update(float dt);
+	void Update(float dt);
 	void AddPointLights(Light light) { m_pointLights.push_back(light); }
 	void AddPointLights(glm::vec3 direction, glm::vec3 color, float intensity)
 	{
@@ -46,7 +46,7 @@ public:
 	}
 
 	CameraBase* GetCamera() { return m_camera; }
-	void SetCamera(CameraBase* cam) { m_camera = cam; }
+	void SetCamera(CameraBase cam) { m_camera = &cam; }
 	glm::vec2 GetWindowSize();
 	glm::vec3 GetAmbientLightColor() { return m_ambientLightColor; }
 	Light GetLight() { return m_light; }

@@ -1,6 +1,7 @@
 #include "CameraBase.h"
 #include <glm/ext.hpp>
 #include <glm/glm.hpp>
+#include "Input.h"
 
 
 CameraBase::CameraBase()
@@ -8,11 +9,12 @@ CameraBase::CameraBase()
 	m_position = glm::vec3(-10, 2, 0);
 	m_phi = 0;
 	m_theta = 0;
+	m_moveSpeed = 1;
 }
 
 void CameraBase::Update(float deltaTime)
 {
-	//
+
 }
 
 

@@ -40,6 +40,11 @@ void Scene::Draw()
 	}
 }
 
+void Scene::Update(float dt)
+{
+	//m_camera->Update(dt);
+}
+
 glm::vec2 Scene::GetWindowSize()
 {
 	return m_windowSize;

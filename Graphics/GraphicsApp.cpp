@@ -31,7 +31,10 @@ bool GraphicsApp::startup() {
 
 	//m_flyCamera = new FlyCamera();
 
-	
+	m_baseCamera = new CameraBase();
+	m_stationaryCameraX = new StationaryCamera();
+	m_stationaryCameraY = new StationaryCamera();
+	m_stationaryCameraZ = new StationaryCamera();
 	//m_viewMatrix =
 	//	glm::lookAt(vec3(10), vec3(0), vec3(0, 1, 0));
 	//// create simple camera transforms
@@ -159,16 +162,20 @@ void GraphicsApp::update(float deltaTime) {
 
 	
 
-	m_baseCamera->Update(deltaTime);
+	//m_baseCamera->Update(deltaTime);
+	//m_flyCamera->Update(deltaTime);
+	//m_stationaryCameraX->Update(deltaTime);
+	//m_stationaryCameraY->Update(deltaTime);
+	//m_stationaryCameraZ->Update(deltaTime);
 	
-	//if(m_flyCameraEnabled) m_flyCamera.Update(deltaTime);
+	m_baseCamera->Update(deltaTime);
 
 	m_boxTransform = glm::rotate(m_boxTransform, 0.05f, glm::vec3(0, 1, 1));
 	m_pyramidTransform = glm::rotate(m_pyramidTransform, 0.05f, glm::vec3(0, 1, 1));
 	m_discTransform = glm::rotate(m_discTransform, 0.05f, glm::vec3(0, 1, 1));
 	m_coneTransform = glm::rotate(m_coneTransform, 0.05f, glm::vec3(0, 1, 1));
 
-
+	
 }
 
 void GraphicsApp::draw() {
@@ -185,9 +192,13 @@ void GraphicsApp::draw() {
 	//m_projectionMatrix = glm::perspective(glm::pi<float>() * 0.25f, getWindowWidth() / (float)getWindowHeight(), 0.1f, 1000.0f);
 
 	//CamDraw(m_baseCamera);
+	
+	
 	m_viewMatrix = m_baseCamera->GetViewMatrix();
+	
 	m_projectionMatrix = m_baseCamera->GetProjectionMatrix(getWindowWidth(),
-		getWindowHeight());
+			getWindowHeight());
+	
 
 	auto pv = m_projectionMatrix * m_viewMatrix;
 
@@ -344,6 +355,10 @@ bool GraphicsApp::LaunchShaders()
 			glm::vec3(0, i * 30, 0), glm::vec3(1, 1, 1),
 			&m_spearMesh, &m_normalLitShader));
 
+	m_scene->AddInstance(new Instance(glm::vec3(0, 0, 0),
+		glm::vec3(0, 0, 0), glm::vec3(1, 1, 1),
+		&m_batarangMesh, &m_normalLitShader));
+
 	m_fullScreenQuad.InitialiseFullscreenQuad();
 	
 	return true;
@@ -383,23 +398,29 @@ void GraphicsApp::ImGUIRefresher()
 	if (ImGui::Button("Fly Camera"))
 	{
 		m_baseCamera = &m_flyCamera;
-	//	m_flyCameraEnabled = !m_flyCameraEnabled;
 	}
 	if (ImGui::CollapsingHeader("Stationary Camera"))
 	{
 		if (ImGui::Button("X"))
 		{
-			
-
+			DisableCams();
+			m_stationaryCameraXEnabled = true;
+			m_scene->SetCamera(*m_stationaryCameraX);
 		}
 		if (ImGui::Button("Y"))
 		{
-		
+			DisableCams();
+			m_stationaryCameraYEnabled = true;
+			m_scene->SetCamera(*m_stationaryCameraY);
 		}
 		if (ImGui::Button("Z"))
 		{
+			DisableCams();
+			m_stationaryCameraZEnabled = true;
+			m_scene->SetCamera(*m_stationaryCameraZ);
 		}
 	}
+
 	ImGui::End();
 
 }
