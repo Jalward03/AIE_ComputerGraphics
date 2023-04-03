@@ -117,10 +117,9 @@ protected:
 	glm::mat4			m_batarangTransform;
 
 	CameraBase* m_baseCamera;
-	FlyCamera m_flyCamera;
-	StationaryCamera* m_stationaryCameraX;
-	StationaryCamera* m_stationaryCameraY;
-	StationaryCamera* m_stationaryCameraZ;
+	FlyCamera* m_flyCamera;
+	StationaryCamera* m_stationaryCamera;
+
 	//CameraBase m_cameras = m_camera;
 
 	//struct Light {
@@ -162,9 +161,7 @@ protected:
 
 
 	bool m_flyCameraEnabled;
-	bool m_stationaryCameraXEnabled;
-	bool m_stationaryCameraYEnabled;
-	bool m_stationaryCameraZEnabled;
+	bool m_stationaryCameraEnabled;
 	bool m_orbitCameraEnabled;
 	
 

@@ -13,7 +13,7 @@ FlyCamera::FlyCamera()
 
 void FlyCamera::Update(float deltaTIme)
 {
-	aie::Input* input = aie::Input::getInstance();
+  	aie::Input* input = aie::Input::getInstance();
 	float thetaR = glm::radians(m_theta);
 	float phiR = glm::radians(m_phi);
 

@@ -31,10 +31,9 @@ bool GraphicsApp::startup() {
 
 	//m_flyCamera = new FlyCamera();
 
-	m_baseCamera = new CameraBase();
-	m_stationaryCameraX = new StationaryCamera();
-	m_stationaryCameraY = new StationaryCamera();
-	m_stationaryCameraZ = new StationaryCamera();
+	m_flyCamera = new FlyCamera();
+	m_stationaryCamera = new StationaryCamera();
+	m_baseCamera = m_stationaryCamera;
 	//m_viewMatrix =
 	//	glm::lookAt(vec3(10), vec3(0), vec3(0, 1, 0));
 	//// create simple camera transforms
@@ -74,9 +73,8 @@ bool GraphicsApp::startup() {
 	m_batarangEnabled = false;
 
 	m_flyCameraEnabled = false;
-	m_stationaryCameraXEnabled = false;
-	m_stationaryCameraYEnabled = false;
-	m_stationaryCameraZEnabled = false;
+	m_stationaryCameraEnabled = false;
+
 	m_orbitCameraEnabled = false;
 
 
@@ -186,6 +184,21 @@ void GraphicsApp::draw() {
 	// wipe the screen to the background colour
 	clearScreen();
 
+	glm::mat4 xCylinderTransform = mat4(1);
+	xCylinderTransform = glm::rotate(xCylinderTransform, glm::radians(90.f), glm::vec3(0, 0, 1));
+
+	glm::mat4 zCylinderTransform = mat4(1);
+	zCylinderTransform = glm::rotate(zCylinderTransform, glm::radians(90.f), glm::vec3(1, 0, 0));
+
+	
+
+
+	Gizmos::addCylinderFilled(glm::vec3(-10, 0, 0), 0.5, 0.5, 24, glm::vec4(1, 0, 0, 1), &xCylinderTransform);
+	Gizmos::addCylinderFilled(glm::vec3(0, 10, 0), 0.5, 0.5, 24, glm::vec4(1, 0, 0, 1), &mat4(1));
+	Gizmos::addCylinderFilled(glm::vec3(0, 0, -10), 0.5, 0.5, 24, glm::vec4(1, 0, 0, 1), &zCylinderTransform);
+
+	if(m_baseCamera != m_flyCamera)
+		Gizmos::addCylinderFilled(glm::vec3(m_flyCamera->GetPosition()), 0.5, 0.5, 24, glm::vec4(1, 0, 0, 1));
 
 
 	// update perspective based on screen size
@@ -254,9 +267,7 @@ void GraphicsApp::CamDraw(CameraBase* cam)
 void GraphicsApp::DisableCams()
 {
 	m_flyCameraEnabled = false;
-	m_stationaryCameraXEnabled = false;
-	m_stationaryCameraYEnabled = false;
-	m_stationaryCameraZEnabled = false;
+	m_stationaryCameraEnabled = false;
 	m_orbitCameraEnabled = false;
 }
 
@@ -355,9 +366,9 @@ bool GraphicsApp::LaunchShaders()
 			glm::vec3(0, i * 30, 0), glm::vec3(1, 1, 1),
 			&m_spearMesh, &m_normalLitShader));
 
-	m_scene->AddInstance(new Instance(glm::vec3(0, 0, 0),
-		glm::vec3(0, 0, 0), glm::vec3(1, 1, 1),
-		&m_batarangMesh, &m_normalLitShader));
+	//m_scene->AddInstance(new Instance(glm::vec3(0, 0, 0),
+	//	glm::vec3(0, 0, 0), glm::vec3(1, 1, 1),
+	//	&m_batarangMesh, &m_normalLitShader));
 
 	m_fullScreenQuad.InitialiseFullscreenQuad();
 	
@@ -397,27 +408,53 @@ void GraphicsApp::ImGUIRefresher()
 	ImGui::Begin("Cameras");
 	if (ImGui::Button("Fly Camera"))
 	{
-		m_baseCamera = &m_flyCamera;
+		DisableCams();
+		if (!m_flyCameraEnabled)
+		{
+			m_baseCamera = m_flyCamera;
+			m_scene->SetCamera(m_baseCamera);
+		}
+		
 	}
 	if (ImGui::CollapsingHeader("Stationary Camera"))
 	{
 		if (ImGui::Button("X"))
 		{
 			DisableCams();
-			m_stationaryCameraXEnabled = true;
-			m_scene->SetCamera(*m_stationaryCameraX);
+			if (!m_stationaryCameraEnabled)
+			{
+				m_baseCamera = m_stationaryCamera;
+				m_baseCamera->SetPosition(glm::vec3(-10, 0, 0));
+				m_baseCamera->SetRotation(0, 0);
+				m_scene->SetCamera(m_baseCamera);
+				
+			}
+			
 		}
 		if (ImGui::Button("Y"))
 		{
 			DisableCams();
-			m_stationaryCameraYEnabled = true;
-			m_scene->SetCamera(*m_stationaryCameraY);
+			if (!m_stationaryCameraEnabled)
+			{
+				m_baseCamera = m_stationaryCamera;
+				m_baseCamera->SetPosition(glm::vec3(0, 10, 0));
+				m_baseCamera->SetRotation(0, -90);
+				m_scene->SetCamera(m_baseCamera);
+
+			}
 		}
 		if (ImGui::Button("Z"))
 		{
 			DisableCams();
-			m_stationaryCameraZEnabled = true;
-			m_scene->SetCamera(*m_stationaryCameraZ);
+			if (!m_stationaryCameraEnabled)
+			{
+				m_baseCamera = m_stationaryCamera;
+				m_baseCamera->SetPosition(glm::vec3(0, 0, -10));
+				m_baseCamera->SetRotation(90, 0);
+				m_scene->SetCamera(m_baseCamera);
+
+			}
+
 		}
 	}
 
@@ -909,9 +946,9 @@ void GraphicsApp::QuadTextureDraw(glm::mat4 pvm)
 	m_texturedShader.bindUniform("diffuseTexture", 0);
 
 	// Bind the texture to a specific location
-	//m_gridTexture.bind(0);
+	m_gridTexture.bind(0);
 
-	m_renderTarget.getTarget(0).bind(0);
+	//m_renderTarget.getTarget(0).bind(0);
 	// Bind the color
 
 	m_quadMesh.Draw();

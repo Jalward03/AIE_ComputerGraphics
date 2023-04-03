@@ -46,7 +46,7 @@ public:
 	}
 
 	CameraBase* GetCamera() { return m_camera; }
-	void SetCamera(CameraBase cam) { m_camera = &cam; }
+	void SetCamera(CameraBase* cam) { m_camera = cam; }
 	glm::vec2 GetWindowSize();
 	glm::vec3 GetAmbientLightColor() { return m_ambientLightColor; }
 	Light GetLight() { return m_light; }

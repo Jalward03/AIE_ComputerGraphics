@@ -67,9 +67,9 @@ void ParticleEmitter::Initialise(unsigned int _maxParticles, unsigned int _emitR
 		indexData[i * 6] = i * 4;
 		indexData[i * 6 + 1] = i * 4 + 1;
 		indexData[i * 6 + 2] = i * 4 + 2;
-		indexData[i * 6 + 3] = i * 4 + 2;
-		indexData[i * 6 + 4] = i * 4 + 3;
-		indexData[i * 6 + 5] = i * 4 + 0;
+		indexData[i * 6 + 3] = i * 4 + 0;
+		indexData[i * 6 + 4] = i * 4 + 2;
+		indexData[i * 6 + 5] = i * 4 + 3;
 	}
 
 	// Time to create the openGL buffers!
@@ -209,7 +209,7 @@ void ParticleEmitter::Update(float _dt, const glm::mat4& _cameraTansform)
 
 			// Set up our billboard's transform
 
-			glm::vec3 zAxis = glm::normalize(glm::vec3(-_cameraTansform[3]) - particle->position);
+			glm::vec3 zAxis = glm::normalize(glm::vec3(_cameraTansform[3]) - particle->position);
 			glm::vec3 xAxis = glm::cross(glm::vec3(_cameraTansform[1]), zAxis);
 			glm::vec3 yAxis = glm::cross(zAxis, xAxis);
 
